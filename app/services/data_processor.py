@@ -125,7 +125,7 @@ class DataProcessor:
         self.df_set_performance = pd.DataFrame(columns=self.set_columns)
         self.df_match_performance = pd.DataFrame(columns=self.match_columns)  
         
-    def readXlsx(self) -> bool:
+    def readXlsx(self) -> pd.DataFrame:
         """Walk folder_path, call dataTransform on each xlsx file.
         Respects max_files: -1 means all files, otherwise stops after max_files files.
         Returns True on success, False if an error occurs.
@@ -148,7 +148,7 @@ class DataProcessor:
             return [self.df_athlete, self.df_match, self.df_set_performance, self.df_match_performance]
         except Exception as e:
             print(f"Error reading xlsx files: {e}")
-            return False
+            return []
     
     def write_to_csv_xlsx(self):
         """Write the transformed DataFrames to CSV files."""
@@ -173,7 +173,7 @@ class DataProcessor:
             self.df_athlete = new_athlete
         elif athlete_id not in self.df_athlete['athlete_id'].values:
             self.df_athlete = pd.concat([self.df_athlete, new_athlete], ignore_index=True)
-        print(self.df_athlete)
+        # print(self.df_athlete)
            
         # build match_id by tournament, weight_class, round, number
         match_tournament = self.game_info[0]+'_'+self.game_info[1]
@@ -186,7 +186,7 @@ class DataProcessor:
             self.df_match = new_match
         elif match_id not in self.df_match['match_id'].values:
             self.df_match = pd.concat([self.df_match, new_match], ignore_index=True)
-        print(self.df_match)
+        # print(self.df_match)
         
         # build match_performance_id by athlete_id and match_id
         match_performance_id = str(uuid.uuid5(NAMESPACE, f"{athlete_id}_{match_id}"))
