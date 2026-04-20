@@ -3,7 +3,7 @@ import pandas as pd
 import uuid 
 # Game Info: ['2024', 'PARIS', 'M80', '1_16', '303', 'CHI', 'CHURCHILL', 'MARTINEZ']
 ATHLETE_ID_COLUMN = ['athlete_id', 'name', 'country']
-MATCH_ID_COLUMN = ['match_id', 'tournament', 'weight_class', 'round', 'number']
+MATCH_ID_COLUMN = ['match_id', 'tournament', 'weight_class', 'round', 'match_number']
 TRANSFORMED_COLUMNS_SET = ['set_performance_id','athlete_id', 'match_id', 'set_number']
 TRANSFORMED_COLUMNS_MATCH = ['match_performance_id','athlete_id', 'match_id']
 TRANSFORMED_RESULT = ['SO','MO','SPP','SOP','SPF','SOF']# 單局勝負結果,整場勝負結果,單局選手得分,單局對手得分,單局選手犯規次數,單局對手犯規次數
@@ -125,7 +125,7 @@ class DataProcessor:
         self.df_set_performance = pd.DataFrame(columns=self.set_columns)
         self.df_match_performance = pd.DataFrame(columns=self.match_columns)  
         
-    def readXlsx(self) -> pd.DataFrame:
+    def readXlsx(self)-> list:
         """Walk folder_path, call dataTransform on each xlsx file.
         Respects max_files: -1 means all files, otherwise stops after max_files files.
         Returns True on success, False if an error occurs.
@@ -134,7 +134,7 @@ class DataProcessor:
             count = 0
             for path in self.folder_path.rglob("*.xlsx"):
                 if self.max_files != -1 and count >= self.max_files:
-                    self.write_to_csv_xlsx()
+                    # self.write_to_csv_xlsx()
                     return [self.df_athlete, self.df_match, self.df_set_performance, self.df_match_performance]
                 if not path.name.startswith("~$"):
                     try:
@@ -144,7 +144,7 @@ class DataProcessor:
                         
                     except Exception as e:
                         print(f"Skipping {path}: {e}")
-            self.write_to_csv_xlsx()
+            # self.write_to_csv_xlsx()
             return [self.df_athlete, self.df_match, self.df_set_performance, self.df_match_performance]
         except Exception as e:
             print(f"Error reading xlsx files: {e}")
@@ -165,7 +165,10 @@ class DataProcessor:
     def transform_data(self, third_round: bool) -> None:
         """Transform the extracted tables into the desired format."""
         # build athlete_id by country and name
-        athlete_name = self.game_info[6]+'_'+self.game_info[7]
+        athlete_name = ""
+        for part_name in self.game_info[6:]:
+            athlete_name += part_name + "_"
+        athlete_name = athlete_name.rstrip("_")
         athlete_country = self.game_info[5]
         athlete_id = str(uuid.uuid5(NAMESPACE, f"{athlete_country}_{athlete_name}"))
         new_athlete = pd.DataFrame([[athlete_id,athlete_name, athlete_country]], columns=ATHLETE_ID_COLUMN)
@@ -175,7 +178,7 @@ class DataProcessor:
             self.df_athlete = pd.concat([self.df_athlete, new_athlete], ignore_index=True)
         # print(self.df_athlete)
            
-        # build match_id by tournament, weight_class, round, number
+        # build match_id by tournament, weight_class, round, match_number
         match_tournament = self.game_info[0]+'_'+self.game_info[1]
         match_weight_class = self.game_info[2]
         match_round = self.game_info[3]
@@ -281,9 +284,9 @@ class DataProcessor:
                     rhythm = TRANSFORMED_RHYTHM_MAP[rhythm_row.回合類型]
                     dict_key = f'{metric}_{rhythm}'
                     temp_df[round_key][dict_key] = getattr(rhythm_row, metric_key)
-            temp_df[round_key]['FT'] = self.game_result[round_key].loc[0, '戰鬥時間']
-            temp_df[round_key]['RT'] = self.game_result[round_key].loc[0, '休息時間']
-            temp_df[round_key]['FRR'] = self.game_result[round_key].loc[0, '戰鬥/休息比']
+            temp_df[round_key]['FT'] = float(self.game_result[round_key].loc[0, '戰鬥時間'])
+            temp_df[round_key]['RT'] = float(self.game_result[round_key].loc[0, '休息時間'])
+            temp_df[round_key]['FRR'] = float(self.game_result[round_key].loc[0, '戰鬥/休息比'].split(' : ')[1])
         
         
         # position variables
