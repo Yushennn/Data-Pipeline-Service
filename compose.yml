@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine       # use  PostgreSQL 15 with Alpine Linux (a lightweight Linux distribution)
+    container_name: taekwondo_pg    # container name
+    restart: always                 # automatically restart the container if it stops
+    environment:
+      POSTGRES_USER: postgres       # database superuser
+      POSTGRES_PASSWORD: password # development password (you can change it)
+      POSTGRES_DB: taekwondo_db     # create an empty database named taekwondo_db
+    ports:
+      - "5432:5432"                 # map the container's 5432 port to your computer's 5432 port
+    volumes:
+      - pgdata:/var/lib/postgresql/data # set up "data persistence", so even if the container is deleted, the data won't be lost
+
+volumes:
+  pgdata:
