@@ -6,6 +6,7 @@ __pycache__/
 .vscode/
 app/services/test_data/
 app/services/test_data_results/
+*.sql
 
 .DS_Store
 Thumbs.db
